@@ -53,7 +53,7 @@ def create_vm(newVmName):
         print "Adding virtual machine '%s' failed: %s" % (vm_name, ex)
 
 
-def add_vm_net(newVmName):
+def add_vm_nic(newVmName):
     vm = api.vms.get(newVmName)
     nic_name = "nic1"
     nic_interface = "virtio"
@@ -139,7 +139,7 @@ if __name__ == "__main__":
             newVmName = arg
             if is_name_valid(newVmName):
                 create_vm(newVmName)
-                add_vm_net(newVmName)
+                add_vm_nic(newVmName)
                 add_vm_disk(newVmName)
                 start_vm(newVmName)
                 disconnect(0)
