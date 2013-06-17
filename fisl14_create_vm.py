@@ -7,13 +7,19 @@ import sys
 import getopt
 import time
 
-api = API(url='https://engine.pahim.org',
-          username='admin@internal',
-          password='0v1rt',
-          ca_file='/etc/pki/ovirt-engine/ca.pem')
-
 MB = 1024 * 1024
 GB = MB * 1024
+
+def connect():
+    global api
+    api = API(url='https://engine.pahim.org',
+              username='admin@internal',
+              password='0v1rt',
+              ca_file='/etc/pki/ovirt-engine/ca.pem')
+
+def disconnect(exitcode):
+    api.disconnect()
+    sys.exit(exitcode)
 
 def is_name_valid(newVmName):
     vms = api.vms.list()
@@ -120,11 +126,12 @@ def usage(msg):
     print 'Usage: new-vm.py -n <new_vm_name>'
 
 if __name__ == "__main__":
+    connect()
     opts, args = getopt.getopt(sys.argv[1:],"hn:",["new-vm-name="])
     for opt, arg in opts:
         if opt == '-h':
             usage("HELP:")
-            sys.exit(0)
+            disconnect(0)
         elif opt in ("-n", "--new-vm-name"):
             newVmName = arg
             if is_name_valid(newVmName):
@@ -134,8 +141,8 @@ if __name__ == "__main__":
                 start_vm(newVmName)
             else:
                 usage('Sorry, name %s is in use.'% newVmName)
-                sys.exit(2)
+                disconnect(2)
 
     if 'newVmName' not in vars():
         usage('What is the new vm name?')
-        sys.exit(1)
+        disconnect(1)
