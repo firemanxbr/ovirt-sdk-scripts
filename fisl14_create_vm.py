@@ -36,11 +36,11 @@ def is_name_valid(newVmName):
         return True
 
 
-def create_vm(newVmName):
+def create_vm(newVmName, mem, cluster, template):
     vm_name = newVmName
-    vm_memory = 512 * MB
-    vm_cluster = api.clusters.get(name="Default")
-    vm_template = api.templates.get(name="Blank")
+    vm_memory = mem * MB
+    vm_cluster = api.clusters.get(name=cluster)
+    vm_template = api.templates.get(name=template)
     vm_os = params.OperatingSystem(boot=[params.Boot(dev="hd")])
     vm_params = params.VM(name=vm_name,
                          memory=vm_memory,
@@ -55,11 +55,11 @@ def create_vm(newVmName):
         print "Adding virtual machine '%s' failed: %s" % (vm_name, ex)
 
 
-def add_vm_nic(newVmName):
+def add_vm_nic(newVmName, nic_name, nic_iface, nic_net):
     vm = api.vms.get(newVmName)
-    nic_name = "nic1"
-    nic_interface = "virtio"
-    nic_network = api.networks.get(name="rhevm")
+    nic_name = nic_name
+    nic_interface = nic_iface
+    nic_network = api.networks.get(name=nic_net)
     nic_params = params.NIC(name=nic_name, interface=nic_interface, network=nic_network)
 
     try:
@@ -69,14 +69,14 @@ def add_vm_nic(newVmName):
         print "Adding network interface to '%s' failed: %s" % (vm.get_name(), ex)
 
 
-def add_vm_disk(newVmName):
+def add_vm_disk(newVmName, disk_size, disk_type, disk_iface, disk_format, bootable):
     vm = api.vms.get(newVmName)
     sd = params.StorageDomains(storage_domain=[api.storagedomains.get(name="vms")])
-    disk_size = 50 * GB
-    disk_type = "system"
-    disk_interface = "virtio"
-    disk_format = "cow"
-    disk_bootable = True
+    disk_size = disk_size * GB
+    disk_type = disk_type 
+    disk_interface = disk_iface 
+    disk_format = disk_format
+    disk_bootable = bootable
 
     disk_params = params.Disk(storage_domains=sd,
                               size=disk_size,
@@ -138,9 +138,9 @@ if __name__ == "__main__":
         elif opt in ("-n", "--new-vm-name"):
             newVmName = arg
             if is_name_valid(newVmName):
-                create_vm(newVmName)
-                add_vm_nic(newVmName)
-                add_vm_disk(newVmName)
+                create_vm(newVmName, 512, 'Default', 'Blank')
+                add_vm_nic(newVmName, 'nic1', 'virtio', 'rhevm')
+                add_vm_disk(newVmName, 50, 'system', 'virtio', 'cow', True)
                 start_vm(newVmName)
                 disconnect(0)
             else:
