@@ -115,12 +115,15 @@ def start_vm(newVmName):
     except Exception as ex:
         print "Unable to start '%s': %s" % (vm.get_name(), ex)
 
+def usage(msg):
+    print msg
+    print 'Usage: new-vm.py -n <new_vm_name>'
 
 if __name__ == "__main__":
     opts, args = getopt.getopt(sys.argv[1:],"hn:",["new-vm-name="])
     for opt, arg in opts:
         if opt == '-h':
-            print 'Usage: new-vm.py -n <new_vm_name>'
+            usage("HELP:")
             sys.exit(0)
         elif opt in ("-n", "--new-vm-name"):
             newVmName = arg
@@ -130,10 +133,9 @@ if __name__ == "__main__":
                 add_vm_disk(newVmName)
                 start_vm(newVmName)
             else:
-                print ('Sorry, name %s is in use.'% newVmName)
+                usage('Sorry, name %s is in use.'% newVmName)
                 sys.exit(2)
 
     if 'newVmName' not in vars():
-        print 'What is the new vm name?'
-        print 'Usage: new-vm.py -n <new_vm_name>'
+        usage('What is the new vm name?')
         sys.exit(1)
