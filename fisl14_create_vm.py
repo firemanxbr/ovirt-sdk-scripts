@@ -73,11 +73,17 @@ def add_vm_disk(newVmName, disk_size, disk_type, disk_interface, disk_format, di
     vm = api.vms.get(newVmName)
     sd = params.StorageDomains(storage_domain=[api.storagedomains.get(name=disk_storage)])
 
+    if disk_format == 'raw':
+        sparse = 'false'
+    elif disk_format == 'cow':
+        sparse = 'true'
+
     disk_params = params.Disk(storage_domains=sd,
                               size=disk_size*GB,
                               type_=disk_type,
                               interface=disk_interface,
                               format=disk_format,
+                              sparse=sparse,
                               bootable=disk_bootable)
 
     try:
