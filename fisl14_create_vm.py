@@ -69,17 +69,12 @@ def add_vm_nic(newVmName, nic_name, nic_iface, nic_net):
         print "Adding network interface to '%s' failed: %s" % (vm.get_name(), ex)
 
 
-def add_vm_disk(newVmName, disk_size, disk_type, disk_iface, disk_format, bootable):
+def add_vm_disk(newVmName, disk_size, disk_type, disk_interface, disk_format, disk_bootable, disk_storage):
     vm = api.vms.get(newVmName)
-    sd = params.StorageDomains(storage_domain=[api.storagedomains.get(name="vms")])
-    disk_size = disk_size * GB
-    disk_type = disk_type 
-    disk_interface = disk_iface 
-    disk_format = disk_format
-    disk_bootable = bootable
+    sd = params.StorageDomains(storage_domain=[api.storagedomains.get(name=disk_storage)])
 
     disk_params = params.Disk(storage_domains=sd,
-                              size=disk_size,
+                              size=disk_size*GB,
                               type_=disk_type,
                               interface=disk_interface,
                               format=disk_format,
@@ -140,7 +135,7 @@ if __name__ == "__main__":
             if is_name_valid(newVmName):
                 create_vm(newVmName, 512, 'Default', 'Blank')
                 add_vm_nic(newVmName, 'nic1', 'virtio', 'rhevm')
-                add_vm_disk(newVmName, 50, 'system', 'virtio', 'cow', True)
+                add_vm_disk(newVmName, 50, 'system', 'virtio', 'cow', True, 'vms')
                 start_vm(newVmName)
                 disconnect(0)
             else:
