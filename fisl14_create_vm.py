@@ -17,9 +17,11 @@ def connect(url,username,password,ca_file):
               password = password,
               ca_file = ca_file)
 
+
 def disconnect(exitcode):
     api.disconnect()
     sys.exit(exitcode)
+
 
 def is_name_valid(newVmName):
     vms = api.vms.list()
@@ -66,6 +68,7 @@ def add_vm_nic(newVmName):
     except Exception as ex:
         print "Adding network interface to '%s' failed: %s" % (vm.get_name(), ex)
 
+
 def add_vm_disk(newVmName):
     vm = api.vms.get(newVmName)
     sd = params.StorageDomains(storage_domain=[api.storagedomains.get(name="vms")])
@@ -88,7 +91,10 @@ def add_vm_disk(newVmName):
     except Exception as ex:
         print "Adding disk to '%s' failed: %s" % (vm.get_name(), ex)
 
-    print ('Waiting disk creation...')
+
+def are_disks_ok(newVmName):
+    vm = api.vms.get(newVmName)
+    print 'Waiting all disks become available...'
     while True:
         waiting = False
         disks = vm.get_disks()
@@ -98,32 +104,26 @@ def add_vm_disk(newVmName):
                 waiting = True
                 time.sleep(1)
         if not waiting:
-            print ('[ OK ]')
+            print ' [  OK  ] '
             break
+
+    return True
 
 
 def start_vm(newVmName):
     vm = api.vms.get(newVmName)
-    while True:
-        waiting = False
-        disks = vm.get_disks()
-        for disk in disks.list():
-            status = disk.get_status().get_state()
-            if status == 'locked':
-                waiting = True
-                print ('Waiting disk %s' % disk.get_name())
-        if not waiting:
-            break
+    if are_disks_ok(newVmName):
+        try:
+            vm.start()
+            print "Started '%s'." % vm.get_name()
+        except Exception as ex:
+            print "Unable to start '%s': %s" % (vm.get_name(), ex)
 
-    try:
-        vm.start()
-        print "Started '%s'." % vm.get_name()
-    except Exception as ex:
-        print "Unable to start '%s': %s" % (vm.get_name(), ex)
 
 def usage(msg):
     print msg
     print 'Usage: new-vm.py -n <new_vm_name>'
+
 
 if __name__ == "__main__":
     connect('https://engine.pahim.org',
