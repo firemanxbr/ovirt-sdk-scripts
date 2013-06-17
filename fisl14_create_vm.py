@@ -10,12 +10,12 @@ import time
 MB = 1024 * 1024
 GB = MB * 1024
 
-def connect():
+def connect(url,username,password,ca_file):
     global api
-    api = API(url='https://engine.pahim.org',
-              username='admin@internal',
-              password='0v1rt',
-              ca_file='/etc/pki/ovirt-engine/ca.pem')
+    api = API(url = url,
+              username = username,
+              password = password,
+              ca_file = ca_file)
 
 def disconnect(exitcode):
     api.disconnect()
@@ -126,7 +126,10 @@ def usage(msg):
     print 'Usage: new-vm.py -n <new_vm_name>'
 
 if __name__ == "__main__":
-    connect()
+    connect('https://engine.pahim.org',
+            'admin@internal',
+            '0v1rt',
+            '/etc/pki/ovirt-engine/ca.pem')
     opts, args = getopt.getopt(sys.argv[1:],"hn:",["new-vm-name="])
     for opt, arg in opts:
         if opt == '-h':
@@ -139,6 +142,7 @@ if __name__ == "__main__":
                 add_vm_net(newVmName)
                 add_vm_disk(newVmName)
                 start_vm(newVmName)
+                disconnect(0)
             else:
                 usage('Sorry, name %s is in use.'% newVmName)
                 disconnect(2)
