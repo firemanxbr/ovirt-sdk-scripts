@@ -7,6 +7,7 @@ from ovirtsdk.api import API
 import sys
 import getopt
 import time
+import re
 
 MB = 1024 * 1024
 GB = MB * 1024
@@ -56,7 +57,7 @@ def create_vm(newVmName, mem, cluster, template):
         print "Adding virtual machine '%s' failed: %s" % (vm_name, ex)
 
 
-def add_vm_nic(newVmName, nic_name, nic_iface, nic_net):
+def add_vm_nic(newVmName, nic_name, nic_iface, nic_net, nic_mac):
     vm = api.vms.get(newVmName)
     nic_name = nic_name
     nic_interface = nic_iface
@@ -65,6 +66,8 @@ def add_vm_nic(newVmName, nic_name, nic_iface, nic_net):
 
     try:
         nic = vm.nics.add(nic_params)
+        nic.mac.set_address(nic_mac)
+        nic.update()
         print "Network interface '%s' added to '%s'." % (nic.get_name(), vm.get_name())
     except Exception as ex:
         print "Adding network interface to '%s' failed: %s" % (vm.get_name(), ex)
@@ -121,34 +124,53 @@ def start_vm(newVmName):
         except Exception as ex:
             print "Unable to start '%s': %s" % (vm.get_name(), ex)
 
+def is_mac_valid(mac):
+    if re.match("[0-9a-f]{2}([:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", mac.lower()):
+        return True
+    else:
+        return False
 
 def usage(msg):
     print msg
-    print 'Usage: new-vm.py -n <new_vm_name>'
+    print 'Usage: new-vm.py --vm-name=<new_vm_name> --mac <mac_address>'
 
 
 if __name__ == "__main__":
+    opts, args = getopt.getopt(sys.argv[1:],"h",["help","vm-name=","mac="])
+    for opt, arg in opts:
+        if opt in ("-h","--help"):
+            usage("Help:")
+            sys.exit(0)
+        elif opt in ("--vm-name"):
+            newVmName = arg
+        elif opt in ("--mac"):
+            mac = arg
+
+    if 'newVmName' not in vars():
+        usage('What is the new vm Name?')
+        sys.exit(1)
+
+    if 'mac' not in vars():
+        usage('What is the new vm MAC Address?')
+        sys.exit(2)
+
+
     connect('https://engine.pahim.org',
             'admin@internal',
             '0v1rt',
             '/etc/pki/ovirt-engine/ca.pem')
-    opts, args = getopt.getopt(sys.argv[1:],"hn:",["new-vm-name="])
-    for opt, arg in opts:
-        if opt == '-h':
-            usage("HELP:")
-            disconnect(0)
-        elif opt in ("-n", "--new-vm-name"):
-            newVmName = arg
-            if is_name_valid(newVmName):
-                create_vm(newVmName, 512, 'Default', 'Blank')
-                add_vm_nic(newVmName, 'nic1', 'virtio', 'rhevm')
-                add_vm_disk(newVmName, 50, 'system', 'virtio', 'cow', True, 'vms')
-                start_vm(newVmName)
-                disconnect(0)
-            else:
-                usage('Sorry, name %s is in use.'% newVmName)
-                disconnect(2)
 
-    if 'newVmName' not in vars():
-        usage('What is the new vm name?')
-        disconnect(1)
+    if is_name_valid(newVmName):
+        if is_mac_valid(mac):
+            create_vm(newVmName, 512, 'Default', 'Blank')
+            add_vm_nic(newVmName, 'nic1', 'virtio', 'ovirtmgmt', mac)
+            add_vm_disk(newVmName, 50, 'system', 'virtio', 'cow', True, 'vms')
+            start_vm(newVmName)
+            disconnect(0)
+        else:
+            usage('Sorry, MAC %s is  not valid.'% mac)
+            disconnect(3)
+    else:
+        usage('Sorry, name %s is in use.'% newVmName)
+        disconnect(2)
+
