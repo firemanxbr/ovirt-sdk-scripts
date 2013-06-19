@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # ovirt-engine-sdk-3.3.0.3-1.20130514.gited3917b.fc18.noarch
-# apahim AT rehat DOT com
+# apahim AT redhat DOT com
 
 from ovirtsdk.xml import params
 from ovirtsdk.api import API
