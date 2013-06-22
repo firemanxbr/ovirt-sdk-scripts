@@ -28,6 +28,7 @@ def disconnect(exitcode):
 def is_name_valid(newVmName):
     vms = api.vms.list()
     duplicated = False
+
     for vm in vms:
         if (vm.name == newVmName):
             duplicated = True
@@ -96,6 +97,7 @@ def add_vm_disk(newVmName, disk_size, disk_type, disk_interface, disk_format, di
 def are_disks_ok(newVmName):
     vm = api.vms.get(newVmName)
     print 'Waiting all disks become available...'
+
     while True:
         waiting = False
         disks = vm.get_disks()
@@ -113,6 +115,7 @@ def are_disks_ok(newVmName):
 
 def start_vm(newVmName):
     vm = api.vms.get(newVmName)
+
     if are_disks_ok(newVmName):
         try:
             vm.start()
@@ -120,11 +123,13 @@ def start_vm(newVmName):
         except Exception as ex:
             print "Unable to start '%s': %s" % (vm.get_name(), ex)
 
+
 def is_mac_valid(mac):
     if re.match("[0-9a-f]{2}([:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", mac.lower()):
         return True
     else:
         return False
+
 
 def usage(msg):
     print msg
@@ -133,6 +138,7 @@ def usage(msg):
 
 if __name__ == "__main__":
     opts, args = getopt.getopt(sys.argv[1:],"h",["help","vm-name=","mac="])
+
     for opt, arg in opts:
         if opt in ("-h","--help"):
             usage("Help:")
@@ -149,7 +155,6 @@ if __name__ == "__main__":
     if 'mac' not in vars():
         usage('What is the new vm MAC Address?')
         sys.exit(2)
-
 
     connect('https://engine.pahim.org',
             'admin@internal',
