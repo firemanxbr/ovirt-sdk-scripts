@@ -38,17 +38,13 @@ def is_name_valid(newVmName):
         return True
 
 
-def create_vm(newVmName, mem, cluster, template):
-    vm_name = newVmName
-    vm_memory = mem * MB
-    vm_cluster = api.clusters.get(name=cluster)
-    vm_template = api.templates.get(name=template)
-    vm_os = params.OperatingSystem(boot=[params.Boot(dev="hd")])
+def create_vm(vm_name, vm_type, vm_mem, vm_cluster, vm_template):
     vm_params = params.VM(name=vm_name,
-                         memory=vm_memory,
-                         cluster=vm_cluster,
-                         template=vm_template,
-                         os=vm_os)
+                          memory=vm_mem*MB,
+                          cluster=api.clusters.get(name=vm_cluster),
+                          template=api.templates.get(name=vm_template),
+                          os=params.OperatingSystem(boot=[params.Boot(dev="hd")]))
+    vm_params.set_type(vm_type)
 
     try:
         api.vms.add(vm=vm_params)
@@ -157,14 +153,14 @@ if __name__ == "__main__":
 
     connect('https://engine.pahim.org',
             'admin@internal',
-            '0v1rt',
+            'admin',
             '/etc/pki/ovirt-engine/ca.pem')
 
     if is_name_valid(newVmName):
         if is_mac_valid(mac):
-            create_vm(newVmName, 512, 'Default', 'Blank')
+            create_vm(newVmName, 'server', 512, 'Default', 'Blank')
             add_vm_nic(newVmName, 'nic1', 'virtio', 'ovirtmgmt', mac)
-            add_vm_disk(newVmName, 50, 'system', 'virtio', 'cow', True, 'vms')
+            add_vm_disk(newVmName, 50, 'system', 'virtio', 'cow', True, 'VMs')
             start_vm(newVmName)
             disconnect(0)
         else:
