@@ -12,7 +12,7 @@ import re
 MB = 1024 * 1024
 GB = MB * 1024
 
-def connect(url,username,password,ca_file):
+def Connect(url,username,password,ca_file):
     global api
     api = API(url = url,
               username = username,
@@ -20,17 +20,17 @@ def connect(url,username,password,ca_file):
               ca_file = ca_file)
 
 
-def disconnect(exitcode):
+def Disconnect(exitcode):
     api.disconnect()
     sys.exit(exitcode)
 
 
-def is_name_valid(newVmName):
+def IsNameValid(vm_name):
     vms = api.vms.list()
     duplicated = False
 
     for vm in vms:
-        if (vm.name == newVmName):
+        if (vm.name == vm_name):
             duplicated = True
 
     if duplicated:
@@ -38,8 +38,19 @@ def is_name_valid(newVmName):
     else:
         return True
 
+def RemoveVm(vm_name):
+    try:
+        api.vms.get('vm03').stop()
+        while api.vms.get('vm03').get_status().get_state() != 'down':
+            print 'loooooop'
+            time.sleep('1')
 
-def create_vm(vm_name, vm_type, vm_mem, vm_cluster, vm_template):
+        api.vms.get('vm03').delete()
+        print "Virtual machine '%s' removed." % vm_name
+    except Exception as ex:
+        print "Adding virtual machine '%s' failed: %s" % (vm_name, ex)
+
+def CreateVm(vm_name, vm_type, vm_mem, vm_cluster, vm_template):
     vm_params = params.VM(name=vm_name,
                           memory=vm_mem*MB,
                           cluster=api.clusters.get(name=vm_cluster),
@@ -54,8 +65,8 @@ def create_vm(vm_name, vm_type, vm_mem, vm_cluster, vm_template):
         print "Adding virtual machine '%s' failed: %s" % (vm_name, ex)
 
 
-def add_vm_nic(newVmName, nic_name, nic_iface, nic_net, nic_mac):
-    vm = api.vms.get(newVmName)
+def AddVmNic(vm_name, nic_name, nic_iface, nic_net, nic_mac):
+    vm = api.vms.get(vm_name)
     nic_name = nic_name
     nic_interface = nic_iface
     nic_network = api.networks.get(name=nic_net)
@@ -70,8 +81,8 @@ def add_vm_nic(newVmName, nic_name, nic_iface, nic_net, nic_mac):
         print "Adding network interface to '%s' failed: %s" % (vm.get_name(), ex)
 
 
-def add_vm_disk(newVmName, disk_size, disk_type, disk_interface, disk_format, disk_bootable, disk_storage):
-    vm = api.vms.get(newVmName)
+def AddVmDisk(vm_name, disk_size, disk_type, disk_interface, disk_format, disk_bootable, disk_storage):
+    vm = api.vms.get(vm_name)
     sd = params.StorageDomains(storage_domain=[api.storagedomains.get(name=disk_storage)])
 
     if disk_format == 'raw':
@@ -94,8 +105,8 @@ def add_vm_disk(newVmName, disk_size, disk_type, disk_interface, disk_format, di
         print "Adding disk to '%s' failed: %s" % (vm.get_name(), ex)
 
 
-def are_disks_ok(newVmName):
-    vm = api.vms.get(newVmName)
+def AreDisksOk(vm_name):
+    vm = api.vms.get(vm_name)
     print 'Waiting all disks become available...'
 
     while True:
@@ -113,10 +124,10 @@ def are_disks_ok(newVmName):
     return True
 
 
-def start_vm(newVmName):
-    vm = api.vms.get(newVmName)
+def StartVm(vm_name):
+    vm = api.vms.get(vm_name)
 
-    if are_disks_ok(newVmName):
+    if AreDisksOk(vm_name):
         try:
             vm.start()
             print "Started '%s'." % vm.get_name()
@@ -124,54 +135,78 @@ def start_vm(newVmName):
             print "Unable to start '%s': %s" % (vm.get_name(), ex)
 
 
-def is_mac_valid(mac):
+def IsMacValid(mac):
     if re.match("[0-9a-f]{2}([:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", mac.lower()):
         return True
     else:
         return False
 
 
-def usage(msg):
+def Usage(msg):
     print msg
-    print 'Usage: new-vm.py --vm-name=<new_vm_name> --mac <mac_address>'
+    print 'Usage: new-vm.py --crete-vm --vm-name=<new_vm_name> --mac <mac_address>'
 
 
 if __name__ == "__main__":
-    opts, args = getopt.getopt(sys.argv[1:],"h",["help","vm-name=","mac="])
+    opts, args = getopt.getopt(sys.argv[1:],"h",["help","remove-vm","create-vm","vm-name=","mac="])
 
+    create_vm = False
+    remove_vm = False
     for opt, arg in opts:
         if opt in ("-h","--help"):
             usage("Help:")
             sys.exit(0)
+        elif opt in ("--create-vm"):
+            create_vm = True
+        elif opt in ("--remove-vm"):
+            remove_vm = True
         elif opt in ("--vm-name"):
-            newVmName = arg
+            vm_name = arg
         elif opt in ("--mac"):
             mac = arg
 
-    if 'newVmName' not in vars():
-        usage('What is the new vm Name?')
-        sys.exit(1)
+    if remove_vm:
+        if create_vm:
+            Usage('Imcompatible options: --create-vm and --remove-vm')
+            sys.exit(4)
+        if 'vm_name' not in vars():
+            Usage('What is the vm Name?')
+            sys.exit(1)
 
-    if 'mac' not in vars():
-        usage('What is the new vm MAC Address?')
-        sys.exit(2)
+        Connect('https://engine.pahim.org',
+                'admin@internal',
+                'admin',
+                '/etc/pki/ovirt-engine/ca.pem')
 
-    connect('https://engine.pahim.org',
-            'admin@internal',
-            'admin',
-            '/etc/pki/ovirt-engine/ca.pem')
+        RemoveVm(vm_name)
+        Disconnect(0)
 
-    if is_name_valid(newVmName):
-        if is_mac_valid(mac):
-            create_vm(newVmName, 'server', 512, 'Default', 'Blank')
-            add_vm_nic(newVmName, 'nic1', 'virtio', 'ovirtmgmt', mac)
-            add_vm_disk(newVmName, 50, 'system', 'virtio', 'cow', True, 'VMs')
-            start_vm(newVmName)
-            disconnect(0)
+    if create_vm:
+        if remove_vm:
+            Usage('Imcompatible options: --create-vm and --remove-vm')
+            sys.exit(4)
+        if 'vm_name' not in vars():
+            Usage('What is the new vm Name?')
+            sys.exit(1)
+        if 'mac' not in vars():
+            Usage('What is the new vm MAC Address?')
+            sys.exit(2)
+
+        Connect('https://engine.pahim.org',
+                'admin@internal',
+                'admin',
+                '/etc/pki/ovirt-engine/ca.pem')
+
+        if IsNameValid(vm_name):
+            if IsMacValid(mac):
+                CreateVm(vm_name, 'server', 512, 'Default', 'Blank')
+                AddVmNic(vm_name, 'nic1', 'virtio', 'ovirtmgmt', mac)
+                AddVmDisk(vm_name, 50, 'system', 'virtio', 'cow', True, 'VMs')
+                StartVm(vm_name)
+                Disconnect(0)
+            else:
+                Usage('Sorry, MAC %s is  not valid.'% mac)
+                Disconnect(3)
         else:
-            usage('Sorry, MAC %s is  not valid.'% mac)
-            disconnect(3)
-    else:
-        usage('Sorry, name %s is in use.'% newVmName)
-        disconnect(2)
-
+            Usage('Sorry, name %s is in use.'% vm_name)
+            Disconnect(2)
