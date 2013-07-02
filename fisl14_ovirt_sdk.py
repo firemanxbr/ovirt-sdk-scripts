@@ -40,9 +40,10 @@ def IsNameValid(vm_name):
 
 def RemoveVm(vm_name):
     try:
+        print 'Stopping VM...'
         api.vms.get('vm03').stop()
+        print 'Waiting VM status...'
         while api.vms.get('vm03').get_status().get_state() != 'down':
-            print 'loooooop'
             time.sleep('1')
 
         api.vms.get('vm03').delete()
@@ -108,7 +109,6 @@ def AddVmDisk(vm_name, disk_size, disk_type, disk_interface, disk_format, disk_b
 def AreDisksOk(vm_name):
     vm = api.vms.get(vm_name)
     print 'Waiting all disks become available...'
-
     while True:
         waiting = False
         disks = vm.get_disks()
@@ -175,7 +175,7 @@ if __name__ == "__main__":
 
         Connect('https://engine.pahim.org',
                 'admin@internal',
-                'admin',
+                '0v1rt',
                 '/etc/pki/ovirt-engine/ca.pem')
 
         RemoveVm(vm_name)
@@ -192,16 +192,16 @@ if __name__ == "__main__":
             Usage('What is the new vm MAC Address?')
             sys.exit(2)
 
-        Connect('https://engine.pahim.org',
+        Connect('https://t420s.pahim.org',
                 'admin@internal',
-                'admin',
+                '0v1rt',
                 '/etc/pki/ovirt-engine/ca.pem')
 
         if IsNameValid(vm_name):
             if IsMacValid(mac):
                 CreateVm(vm_name, 'server', 512, 'Default', 'Blank')
                 AddVmNic(vm_name, 'nic1', 'virtio', 'ovirtmgmt', mac)
-                AddVmDisk(vm_name, 50, 'system', 'virtio', 'cow', True, 'VMs')
+                AddVmDisk(vm_name, 50, 'system', 'virtio', 'cow', True, 'vms')
                 StartVm(vm_name)
                 Disconnect(0)
             else:
