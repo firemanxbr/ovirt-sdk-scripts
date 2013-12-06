@@ -1,4 +1,7 @@
 #!/usr/bin/python
+# Send all VMs to an Export Domain, forcing overwrite.
+# Running VMs will be stopped and started again after export.
+
 from ovirtsdk.xml import params
 from ovirtsdk.api import API
 import sys
