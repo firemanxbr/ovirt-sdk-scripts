@@ -21,7 +21,6 @@ def Disconnect(exitcode):
     api.disconnect()
     sys.exit(exitcode)
 
-
 try:
     Connect(EXPORT_NAME,ENGINE_SERVER,ENGINE_USER,ENGINE_PASS,ENGINE_CERT)
 
@@ -46,7 +45,6 @@ try:
             api.vms.get(vm.name).start()
 
     Disconnect(0)
+
 except Exception as e:
-   print 'Failed to export VM:\n%s' % str(e)
-
-
+    print 'Failed to export VM:\n%s' % str(e)
