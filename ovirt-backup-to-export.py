@@ -5,6 +5,10 @@ import sys
 import time
 
 EXPORT_NAME = "EXPORT"
+ENGINE_SERVER = "https://t420s.pahim.org"
+ENGINE_USER = "admin@internal"
+ENGINE_PASS = "admin"
+ENGINE_CERT = "/etc/pki/ovirt-engine/ca.pem"
 
 def Connect(url,username,password,ca_file):
     global api
@@ -17,13 +21,10 @@ def Disconnect(exitcode):
     api.disconnect()
     sys.exit(exitcode)
 
-Connect('https://t420s.pahim.org',
-                'admin@internal',
-                'admin',
-                '/etc/pki/ovirt-engine/ca.pem')
-
 
 try:
+    Connect(EXPORT_NAME,ENGINE_SERVER,ENGINE_USER,ENGINE_PASS,ENGINE_CERT)
+
     for vm in api.vms.list():
         previous_state = api.vms.get(vm.name).status.state
 
@@ -44,8 +45,8 @@ try:
             print 'Starting back VM %s' % vm.name
             api.vms.get(vm.name).start()
 
+    Disconnect(0)
 except Exception as e:
    print 'Failed to export VM:\n%s' % str(e)
 
 
-Disconnect(0)
