@@ -173,7 +173,7 @@ if __name__ == "__main__":
             Usage('What is the vm Name?')
             sys.exit(1)
 
-        Connect('https://engine.pahim.org',
+        Connect('https://t420s.pahim.org',
                 'admin@internal',
                 '0v1rt',
                 '/etc/pki/ovirt-engine/ca.pem')
@@ -199,9 +199,9 @@ if __name__ == "__main__":
 
         if IsNameValid(vm_name):
             if IsMacValid(mac):
-                CreateVm(vm_name, 'server', 512, 'Default', 'Blank')
+                CreateVm(vm_name, 'server', 1024, 'Default', 'Blank')
                 AddVmNic(vm_name, 'nic1', 'virtio', 'ovirtmgmt', mac)
-                AddVmDisk(vm_name, 50, 'system', 'virtio', 'cow', True, 'vms')
+                AddVmDisk(vm_name, 10, 'system', 'virtio', 'cow', True, 'vms')
                 StartVm(vm_name)
                 Disconnect(0)
             else:
