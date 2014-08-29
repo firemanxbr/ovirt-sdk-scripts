@@ -7,8 +7,8 @@ from ovirtsdk.api import API
 import sys
 import time
 
-EXPORT_NAME = "EXPORT"
-ENGINE_SERVER = "https://t420s.pahim.org"
+EXPORT_NAME = "EXPORT_DOMAIN"
+ENGINE_SERVER = "https://ovirt.example.com"
 ENGINE_USER = "admin@internal"
 ENGINE_PASS = "admin"
 ENGINE_CERT = "/etc/pki/ovirt-engine/ca.pem"
@@ -25,7 +25,7 @@ def Disconnect(exitcode):
     sys.exit(exitcode)
 
 try:
-    Connect(EXPORT_NAME,ENGINE_SERVER,ENGINE_USER,ENGINE_PASS,ENGINE_CERT)
+    Connect(ENGINE_SERVER,ENGINE_USER,ENGINE_PASS,ENGINE_CERT)
 
     for vm in api.vms.list():
         previous_state = api.vms.get(vm.name).status.state
